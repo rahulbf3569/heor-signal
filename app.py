@@ -293,16 +293,22 @@ def sources(request: Request) -> HTMLResponse:
 def toggle_save(item_id: str) -> JSONResponse:
     if not db.get_item(item_id):
         raise HTTPException(status_code=404, detail="Unknown item")
-    saved = db.toggle_saved(item_id)
+    try:
+        saved = db.toggle_saved(item_id)
+    except Exception:
+        return JSONResponse(
+            {"ok": False, "saved": False, "message": "Saving is disabled on this read-only deployment."},
+            status_code=503,
+        )
     return JSONResponse({"ok": True, "saved": saved})
 
 
 @app.post("/api/update")
 def trigger_update() -> JSONResponse:
-    if _update_state.get("running") or _update_lock.locked():
-        return JSONResponse({"ok": True, "running": True, "message": "Update already running"})
-    threading.Thread(target=_background_update, daemon=True, name="heor-update").start()
-    return JSONResponse({"ok": True, "running": True, "message": "Update started"})
+    return JSONResponse(
+        {"ok": False, "running": False, "message": "Updates run locally; this deployment is read-only."},
+        status_code=503,
+    )
 
 
 @app.get("/api/status")

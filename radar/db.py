@@ -66,13 +66,24 @@ class Database:
     def connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self.path), timeout=30)
         conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA foreign_keys=ON")
+        try:
+            conn.execute("PRAGMA journal_mode=WAL")
+        except Exception:
+            pass
+        try:
+            conn.execute("PRAGMA foreign_keys=ON")
+        except Exception:
+            pass
         return conn
 
     def init(self) -> None:
-        with self.connect() as conn:
-            conn.executescript(SCHEMA)
+        try:
+            with self.connect() as conn:
+                conn.executescript(SCHEMA)
+        except Exception:
+            # Read-only filesystem (e.g. Vercel): schema already exists in the
+            # bundled database; nothing to create.
+            pass
 
     # ---- items ---------------------------------------------------------
     def get_by_fingerprint(self, fingerprint: str) -> sqlite3.Row | None:

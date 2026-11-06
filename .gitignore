@@ -1,5 +1,4 @@
 .env
-data/heor_signal.db
 data/heor_signal.db-*
 data/logs/*.log
 __pycache__/

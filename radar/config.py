@@ -116,7 +116,10 @@ def load_config(path: str | Path | None = None) -> Config:
     digest_dir = ROOT / app.get("digest_dir", "data/digests")
     log_dir = ROOT / app.get("log_dir", "data/logs")
     for folder in (database.parent, digest_dir, log_dir):
-        folder.mkdir(parents=True, exist_ok=True)
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
 
     return Config(
         name=app.get("name", "HEOR Signal"),
