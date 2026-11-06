@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Sources — {{ app.name }}{% endblock %}
+
+{% block content %}
+<section class="masthead masthead-compact">
+  <div class="masthead-copy">
+    <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Source health</p>
+    <h1>The wires behind the brief.</h1>
+    <p class="standfirst">Direct feeds from HTA bodies and regulators, targeted Google News queries, public LinkedIn posts and optional PubMed research. Every run records what worked.</p>
+  </div>
+  <div class="edition-stats" aria-label="Source statistics">
+    <div class="stat"><strong>{{ healthy }}</strong><span>healthy</span></div>
+    <div class="stat"><strong>{{ total }}</strong><span>reported</span></div>
+    <div class="stat"><strong>{{ configured }}</strong><span>configured</span></div>
+  </div>
+</section>
+
+{% if sources %}
+<div class="source-grid">
+  {% for source in sources %}
+  <article class="source-card {{ 'is-bad' if source.status != 'ok' }}">
+    <div class="source-card-top">
+      <span class="health-dot" aria-hidden="true"></span>
+      <h2>{{ source.name }}</h2>
+      <span class="source-items">{{ source.item_count }}</span>
+    </div>
+    <p class="source-state">{{ source.status }}{% if source.when %} · {{ source.when }}{% endif %}</p>
+    {% if source.error %}<p class="source-error">{{ source.error }}</p>{% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="empty-state">
+  <p class="empty-kicker">No health report</p>
+  <h2>No ingest has run yet.</h2>
+  <p>Source health appears here after the first update.</p>
+  <div class="empty-actions"><button class="btn-primary" type="button" data-refresh>Run the first ingest</button></div>
+</section>
+{% endif %}
+
+<section class="source-note">
+  <h2>What is watched</h2>
+  <p>NICE, ISPOR, EMA and HAS are read directly. Google News covers ICER, Canada’s Drug Agency, PBAC, EU HTA, FDA, CMS, MHRA, India policy and the wider HEOR press. LinkedIn posts are discovered through Google News and read from their public pages; if LinkedIn throttles requests, the run stops enriching and keeps the headline.</p>
+</section>
+{% endblock %}

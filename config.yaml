@@ -1,0 +1,327 @@
+app:
+  name: HEOR Signal
+  tagline: The daily read on evidence, access & policy.
+  timezone: Asia/Kolkata
+  max_items: 42
+  min_score: 5.0
+  min_store_score: 3.0
+  max_linkedin: 12
+  max_per_source: 5
+  max_per_category: 9
+  max_linkedin_enrich: 20
+  decode_limit: 120
+  database: data/heor_signal.db
+  digest_dir: data/digests
+  log_dir: data/logs
+
+categories:
+  policy:
+    label: Policy
+    short: Policy
+    color: "#B5522E"
+    blurb: Governments, regulators and the rules around price and coverage.
+  market_access:
+    label: Market access
+    short: Access
+    color: "#27695B"
+    blurb: Reimbursement, payer strategy and the route from approval to patients.
+  hta:
+    label: HTA
+    short: HTA
+    color: "#40508F"
+    blurb: Assessment bodies, methods and the evidence they will accept.
+  heor:
+    label: RWE & HEOR
+    short: RWE / HEOR
+    color: "#70558A"
+    blurb: Real-world evidence, health economics and outcomes research.
+  cro:
+    label: CRO & trials
+    short: CRO
+    color: "#8A642A"
+    blurb: Delivery, sites, data and the business of clinical research.
+  ai:
+    label: AI & digital
+    short: AI
+    color: "#2B6E87"
+    blurb: Artificial intelligence where evidence, access and trials meet.
+
+sources:
+  # ---- primary sources we read directly -----------------------------------
+  - id: nice_news
+    name: NICE
+    type: nice
+    category: hta
+    url: https://www.nice.org.uk/news
+    limit: 5
+    max_age_days: 30
+
+  - id: ispor_news
+    name: ISPOR
+    type: ispor
+    category: heor
+    url: https://www.ispor.org/heor-resources/news-top/news
+    limit: 6
+    max_age_days: 45
+
+  - id: ema_news
+    name: EMA
+    type: rss
+    category: policy
+    url: https://www.ema.europa.eu/en/news.xml
+    limit: 6
+    max_age_days: 14
+    locale: en
+
+  - id: has_medicines
+    name: HAS
+    type: rss
+    category: hta
+    url: https://www.has-sante.fr/feed/Rss2.jsp?id=p_3081449
+    limit: 3
+    max_age_days: 10
+    locale: fr
+
+  # ---- topic searches ------------------------------------------------------
+  - id: gnews_heor
+    name: HEOR
+    type: google_news
+    category: heor
+    query: >-
+      ("health economics" OR HEOR OR "outcomes research" OR pharmacoeconomics)
+      when:4d
+    limit: 14
+
+  - id: gnews_rwe
+    name: RWE
+    type: google_news
+    category: heor
+    query: >-
+      ("real-world evidence" OR "real world evidence" OR "real-world data"
+      OR "real world data" OR RWE) when:4d
+    limit: 14
+
+  - id: gnews_access
+    name: Market access
+    type: google_news
+    category: market_access
+    query: >-
+      ("market access" OR "patient access" OR reimbursement)
+      (pharma OR pharmaceutical OR drug OR medicine OR biotech OR therapy)
+      when:3d
+    limit: 14
+
+  - id: gnews_hta
+    name: HTA
+    type: google_news
+    category: hta
+    query: >-
+      ("health technology assessment" OR HTA OR "joint clinical assessment"
+      OR "EU HTA") (drug OR medicine OR device OR reimbursement OR therapy)
+      when:4d
+    limit: 14
+
+  - id: gnews_policy
+    name: Policy
+    type: google_news
+    category: policy
+    query: >-
+      ("drug pricing" OR "Medicare drug price negotiation" OR "Inflation Reduction Act"
+      OR "most favored nation" OR "PBM reform" OR "pharma policy") when:3d
+    limit: 14
+
+  - id: gnews_cro
+    name: CRO
+    type: google_news
+    category: cro
+    query: >-
+      ("contract research organization" OR "contract research organisation" OR CRO
+      OR IQVIA OR Parexel OR Syneos OR Fortrea OR Medpace)
+      ("clinical trial" OR "drug development" OR pharma) when:3d
+    limit: 12
+
+  - id: gnews_ai
+    name: AI
+    type: google_news
+    category: ai
+    query: >-
+      ("artificial intelligence" OR "AI" OR "machine learning" OR "large language model")
+      ("clinical trial" OR "drug development" OR HEOR OR RWE
+      OR "market access" OR "health technology assessment" OR regulatory) when:3d
+    limit: 14
+
+  - id: gnews_ispor
+    name: ISPOR
+    type: google_news
+    category: heor
+    query: >-
+      (ISPOR OR "ISPOR Europe" OR ISPOREurope) (HEOR OR RWE OR HTA
+      OR "market access" OR research OR evidence) when:6d
+    limit: 8
+
+  - id: gnews_fda
+    name: FDA
+    type: google_news
+    category: policy
+    query: >-
+      site:fda.gov (drug OR medicine OR device OR "artificial intelligence"
+      OR guidance OR approval) when:5d
+    limit: 7
+
+  - id: gnews_cms
+    name: CMS
+    type: google_news
+    category: policy
+    query: >-
+      site:cms.gov (drug OR coverage OR payment OR Medicare OR Medicaid
+      OR reimbursement) when:5d
+    limit: 7
+
+  - id: gnews_icer
+    name: ICER
+    type: google_news
+    category: hta
+    query: >-
+      (site:icer.org OR "Institute for Clinical and Economic Review")
+      (drug OR treatment OR assessment OR evidence) when:14d
+    limit: 6
+
+  - id: gnews_cda
+    name: Canada's Drug Agency
+    type: google_news
+    category: hta
+    query: >-
+      ("Canada's Drug Agency" OR CADTH OR "Canadian Agency for Drugs and Technologies in Health")
+      (drug OR reimbursement OR HTA OR recommendation) when:14d
+    limit: 6
+
+  - id: gnews_pbac
+    name: PBAC
+    type: google_news
+    category: hta
+    query: >-
+      (PBAC OR "Pharmaceutical Benefits Advisory Committee")
+      (drug OR medicine OR reimbursement OR access) when:21d
+    limit: 6
+
+  - id: gnews_eu_hta
+    name: EU HTA
+    type: google_news
+    category: hta
+    query: >-
+      ("joint clinical assessment" OR "EU HTA" OR "European HTA"
+      OR "HTA regulation") (drug OR medicine OR device OR evidence) when:10d
+    limit: 8
+
+  - id: gnews_india
+    name: India policy
+    type: google_news
+    category: policy
+    query: >-
+      (CDSCO OR NPPA OR "Health Technology Assessment in India" OR HTAIn
+      OR "National Pharmaceutical Pricing Authority")
+      (drug OR price OR pricing OR reimbursement OR HTA OR access) when:14d
+    limit: 8
+    locale: en-IN
+    gl: IN
+    ceid: IN:en
+
+  - id: gnews_mhra
+    name: MHRA / EMA
+    type: google_news
+    category: policy
+    query: >-
+      (MHRA OR "European Medicines Agency" OR EMA)
+      (drug OR medicine OR AI OR guidance OR approval OR regulatory) when:5d
+    limit: 8
+
+  # ---- LinkedIn: public posts indexed by Google News ----------------------
+  - id: li_heor
+    name: LinkedIn · HEOR
+    type: google_news
+    category: heor
+    query: >-
+      site:linkedin.com/posts ("#HEOR" OR "health economics"
+      OR "outcomes research" OR "health economist") when:4d
+    limit: 20
+
+  - id: li_rwe
+    name: LinkedIn · RWE
+    type: google_news
+    category: heor
+    query: >-
+      site:linkedin.com/posts ("#RWE" OR "#RealWorldEvidence"
+      OR "real-world evidence" OR "real-world data" OR "RWD") when:4d
+    limit: 20
+
+  - id: li_hta
+    name: LinkedIn · HTA
+    type: google_news
+    category: hta
+    query: >-
+      site:linkedin.com/posts ("#HTA" OR "health technology assessment"
+      OR "joint clinical assessment") (drug OR medicine OR pharma OR reimbursement) when:4d
+    limit: 16
+
+  - id: li_access
+    name: LinkedIn · Market access
+    type: google_news
+    category: market_access
+    query: >-
+      site:linkedin.com/posts ("#MarketAccess" OR "market access"
+      OR "patient access" OR reimbursement) (pharma OR pharmaceutical OR drug
+      OR medicine OR biotech OR therapy) when:4d
+    limit: 20
+
+  - id: li_cro
+    name: LinkedIn · CRO
+    type: google_news
+    category: cro
+    query: >-
+      site:linkedin.com/posts ("#CRO" OR "contract research"
+      OR "clinical research organization") ("clinical trial" OR pharma
+      OR "drug development") when:4d
+    limit: 14
+
+  - id: li_ispor
+    name: LinkedIn · ISPOR
+    type: google_news
+    category: heor
+    query: >-
+      site:linkedin.com/posts ("#ISPOREurope" OR "#ISPOREurope2026"
+      OR "ISPOR Europe" OR "ISPOR 2026") when:5d
+    limit: 14
+
+  - id: li_ai
+    name: LinkedIn · AI
+    type: google_news
+    category: ai
+    query: >-
+      site:linkedin.com/posts ("#AI" OR "artificial intelligence"
+      OR "machine learning") (HEOR OR RWE OR HTA OR "market access"
+      OR "clinical trial" OR "drug development") when:4d
+    limit: 14
+
+  # ---- research ------------------------------------------------------------
+  - id: pubmed_heor
+    name: PubMed
+    type: pubmed
+    category: heor
+    term: >-
+      ("health economics"[Title/Abstract] OR "real-world evidence"[Title/Abstract]
+      OR "health technology assessment"[Title/Abstract] OR "market access"[Title/Abstract])
+      AND 2026[PDAT]
+    limit: 6
+    max_age_days: 30
+
+  - id: pubmed_ai
+    name: PubMed
+    type: pubmed
+    category: ai
+    term: >-
+      ("artificial intelligence"[Title/Abstract] OR "large language model"[Title/Abstract])
+      AND ("health economics"[Title/Abstract] OR "real-world evidence"[Title/Abstract]
+      OR "health technology assessment"[Title/Abstract] OR "market access"[Title/Abstract])
+      AND 2026[PDAT]
+    limit: 4
+    max_age_days: 30

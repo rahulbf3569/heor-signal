@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Archive — {{ app.name }}{% endblock %}
+
+{% block content %}
+<section class="masthead masthead-compact">
+  <div class="masthead-copy">
+    <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Archive</p>
+    <h1>Every edition, one shelf.</h1>
+    <p class="standfirst">The full record of what mattered, day by day. {{ total }} stories across {{ editions|length }} edition{{ '' if editions|length == 1 else 's' }}.</p>
+  </div>
+</section>
+
+{% if editions %}
+<div class="archive-list">
+  {% for edition in editions %}
+  <article class="archive-row">
+    <div class="archive-date">
+      <span class="archive-day">{{ edition.date[8:]|int }}</span>
+      <span class="archive-month">{{ edition.label.split(', ')[1].split(' ')[1] }}</span>
+      <span class="archive-year">{{ edition.date[:4] }}</span>
+    </div>
+    <div class="archive-main">
+      <h2><a href="/?date={{ edition.date }}">{{ edition.label }}</a></h2>
+      <p class="archive-meta">{{ edition.count }} stories · {{ edition.stats.sources }} sources · {{ edition.stats.linkedin }} LinkedIn</p>
+      <ul class="archive-titles">
+        {% for title in edition.titles %}<li>{{ title }}</li>{% endfor %}
+      </ul>
+    </div>
+    <a class="archive-open" href="/?date={{ edition.date }}">Open <span aria-hidden="true">→</span></a>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="empty-state">
+  <p class="empty-kicker">Nothing archived</p>
+  <h2>The shelf is empty for now.</h2>
+  <p>Once the first daily brief runs, every edition will be kept here.</p>
+  <div class="empty-actions"><a class="btn-primary" href="/">Back to today</a></div>
+</section>
+{% endif %}
+{% endblock %}

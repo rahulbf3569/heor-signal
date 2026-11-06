@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "macros.html" import story %}
+{% block title %}Saved — {{ app.name }}{% endblock %}
+
+{% block content %}
+<section class="masthead masthead-compact">
+  <div class="masthead-copy">
+    <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Reading list</p>
+    <h1>Saved for later.</h1>
+    <p class="standfirst">Posts, papers and policy moves you want to come back to. Saved items stay out of the daily selection and remain here until you remove them.</p>
+  </div>
+  <div class="edition-stats" aria-label="Saved statistics">
+    <div class="stat"><strong>{{ items|length }}</strong><span>saved</span></div>
+  </div>
+</section>
+
+{% if items %}
+<div class="stories stories-standalone">
+  {% for item in items %}{{ story(item) }}{% endfor %}
+</div>
+{% else %}
+<section class="empty-state">
+  <p class="empty-kicker">Nothing saved</p>
+  <h2>A quiet reading list.</h2>
+  <p>Tap the bookmark on any story to keep it here. Saved items are never removed from the archive.</p>
+  <div class="empty-actions"><a class="btn-primary" href="/">Read today’s edition</a></div>
+</section>
+{% endif %}
+{% endblock %}

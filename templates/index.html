@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% from "macros.html" import story, top_story %}
+{% block title %}{{ app.name }} — {{ edition_label }}{% endblock %}
+
+{% block content %}
+<section class="masthead">
+  <div class="masthead-copy">
+    <p class="eyebrow">
+      <span class="eyebrow-dot" aria-hidden="true"></span>
+      {{ day_heading }} · {{ edition_label }}
+    </p>
+    <h1>{{ app.tagline }}</h1>
+    <p class="standfirst">A working brief on HEOR, real-world evidence, market access, HTA, clinical research and the policy connecting them.</p>
+  </div>
+  <div class="edition-stats" aria-label="Edition statistics">
+    <div class="stat">
+      <strong>{{ stats.total }}</strong>
+      <span>stories</span>
+    </div>
+    <div class="stat">
+      <strong>{{ stats.sources }}</strong>
+      <span>sources</span>
+    </div>
+    <div class="stat">
+      <strong>{{ stats.linkedin }}</strong>
+      <span>LinkedIn</span>
+    </div>
+  </div>
+</section>
+
+<div class="edition-bar">
+  <div class="date-nav">
+    {% if older %}
+      <a href="/?date={{ older }}" title="Previous edition"><span aria-hidden="true">←</span> Earlier</a>
+    {% else %}
+      <span class="is-disabled"><span aria-hidden="true">←</span> Earlier</span>
+    {% endif %}
+    {% if not is_today %}<a class="latest-link" href="/">Latest</a>{% endif %}
+    {% if newer %}
+      <a href="/?date={{ newer }}" title="Next edition">Later <span aria-hidden="true">→</span></a>
+    {% else %}
+      <span class="is-disabled">Later <span aria-hidden="true">→</span></span>
+    {% endif %}
+  </div>
+
+  <nav class="chips" aria-label="Filter by category">
+    <a class="chip {{ 'is-active' if not active_category }}" href="/?date={{ edition_date }}{% if q %}&q={{ q|urlencode }}{% endif %}">
+      All <span class="chip-count">{{ all_count }}</span>
+    </a>
+    {% for key in category_order %}
+      {% set cat = categories[key] %}
+      {% set count = counts.get(key, 0) %}
+      {% if count %}
+      <a class="chip {{ 'is-active' if active_category == key }}"
+         style="--chip: {{ cat.color }}"
+         href="/?date={{ edition_date }}&category={{ key }}{% if q %}&q={{ q|urlencode }}{% endif %}">
+        <span class="chip-dot" aria-hidden="true"></span>{{ cat.short }} <span class="chip-count">{{ count }}</span>
+      </a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+</div>
+
+{% if q or active_category %}
+<div class="filter-note">
+  <p>
+    {% if q %}Searching for <strong>“{{ q }}”</strong>{% endif %}
+    {% if q and active_category %} in {% endif %}
+    {% if active_category %}<strong>{{ categories[active_category].label }}</strong>{% endif %}
+    <span class="filter-count">{{ filtered|length }} result{{ '' if filtered|length == 1 else 's' }}</span>
+  </p>
+  <a href="/?date={{ edition_date }}">Clear filters ×</a>
+</div>
+{% endif %}
+
+{% if not items %}
+  <section class="empty-state">
+    <p class="empty-kicker">{{ 'No edition yet' if is_today else 'Nothing filed for this date' }}</p>
+    <h2>{{ 'The first brief is one refresh away.' if is_today else 'Try the latest edition.' }}</h2>
+    <p>
+      {% if is_today %}
+        Run the first ingest to pull today’s LinkedIn posts, HTA decisions and policy news into one place.
+      {% else %}
+        There is no edition filed for {{ edition_label }}. The most recent edition is still on the shelf.
+      {% endif %}
+    </p>
+    <div class="empty-actions">
+      {% if is_today %}
+        <button class="btn-primary" type="button" data-refresh>Fetch today’s brief</button>
+        <code>python run.py update</code>
+      {% else %}
+        <a class="btn-primary" href="/">Open the latest edition</a>
+      {% endif %}
+    </div>
+  </section>
+{% else %}
+  {% if top %}{{ top_story(top) }}{% endif %}
+
+  {% for section in sections %}
+  <section class="section" id="{{ section.key }}" style="--accent: {{ section.color }}">
+    <header class="section-head">
+      <div>
+        <h2>{{ section.label }}</h2>
+        <p class="section-blurb">{{ section.blurb }}</p>
+      </div>
+      <span class="section-count">{{ section['items']|length }}</span>
+    </header>
+    <div class="stories">
+      {% for item in section['items'] %}{{ story(item) }}{% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+  <div class="end-mark">
+    <span>End of edition</span>
+    <a href="/archive">Browse the archive <span aria-hidden="true">→</span></a>
+  </div>
+{% endif %}
+{% endblock %}

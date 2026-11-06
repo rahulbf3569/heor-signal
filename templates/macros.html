@@ -1,0 +1,53 @@
+{% macro save_button(item, compact=false) -%}
+<button class="save-btn{% if item.saved %} is-saved{% endif %}" type="button"
+        data-save="{{ item.id }}" aria-pressed="{{ 'true' if item.saved else 'false' }}"
+        aria-label="{{ 'Remove from saved' if item.saved else 'Save story' }}">
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M6.5 3.75h11a.75.75 0 0 1 .75.75v15.1L12 15.6l-6.25 4V4.5a.75.75 0 0 1 .75-.75Z"
+          fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+  </svg>
+  <span class="save-label">{{ 'Saved' if item.saved else 'Save' }}</span>
+</button>
+{%- endmacro %}
+
+{% macro story(item) -%}
+<article class="story" style="--accent: {{ item.category_color }}">
+  <div class="story-main">
+    <div class="story-kicker">
+      <span class="source-avatar" aria-hidden="true">{{ item.source_label[:1]|upper }}</span>
+      <span class="story-source">{{ item.source_label }}</span>
+      <span class="dot-sep">·</span>
+      <time datetime="{{ item.published_at }}">{{ item.when }}</time>
+      {% if item.linkedin %}<span class="pill pill-linkedin">LinkedIn</span>{% endif %}
+    </div>
+    <h3 class="story-title"><a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.title }}</a></h3>
+    {% if item.summary_text %}<p class="story-summary">{{ item.summary_text }}</p>{% endif %}
+    <div class="story-foot">
+      <div class="tags">
+        <span class="tag tag-category">{{ item.category_short }}</span>
+        {% for tag in item.tags[:3] %}<span class="tag">{{ tag }}</span>{% endfor %}
+      </div>
+      {{ save_button(item) }}
+    </div>
+  </div>
+</article>
+{%- endmacro %}
+
+{% macro top_story(item) -%}
+<article class="top-story" style="--accent: {{ item.category_color }}">
+  <p class="top-kicker"><span>Top story</span><span class="top-category">{{ item.category_short }}</span></p>
+  <h2 class="top-title"><a href="{{ item.url }}" target="_blank" rel="noopener">{{ item.title }}</a></h2>
+  {% if item.summary_text %}<p class="top-summary">{{ item.summary_text }}</p>{% endif %}
+  <div class="top-meta">
+    <span class="source-avatar" aria-hidden="true">{{ item.source_label[:1]|upper }}</span>
+    <span class="top-source">{{ item.source_label }}</span>
+    <span class="dot-sep">·</span>
+    <time datetime="{{ item.published_at }}">{{ item.when }}</time>
+    {% if item.linkedin %}<span class="pill pill-linkedin">LinkedIn</span>{% endif %}
+  </div>
+  <div class="top-actions">
+    <a class="read-link" href="{{ item.url }}" target="_blank" rel="noopener">Read at {{ item.host }} <span aria-hidden="true">→</span></a>
+    {{ save_button(item) }}
+  </div>
+</article>
+{%- endmacro %}
