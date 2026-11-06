@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -59,7 +61,18 @@ CREATE TABLE IF NOT EXISTS runs (
 
 class Database:
     def __init__(self, path: str | Path):
-        self.path = Path(path)
+        path = Path(path)
+        # Serverless/read-only deployments (e.g. Vercel) bundle the database
+        # read-only. SQLite needs a writable directory for its journal, so copy
+        # the bundled file to a writable location on first use.
+        if path.exists() and not os.access(path.parent, os.W_OK):
+            writable_dir = Path("/tmp")
+            if os.access(writable_dir, os.W_OK):
+                target = writable_dir / path.name
+                if not target.exists():
+                    shutil.copy2(path, target)
+                path = target
+        self.path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.init()
 
