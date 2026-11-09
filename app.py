@@ -48,6 +48,7 @@ def present(row: Any) -> dict[str, Any] | None:
     item["dateline"] = compact_date(dt, config.timezone) if dt else ""
     item["saved"] = bool(item.get("is_saved"))
     item["linkedin"] = item.get("source_type") == "linkedin"
+    item["region"] = derive_region(item)
     item["source_label"] = (item.get("author") or "LinkedIn") if item["linkedin"] else (item.get("source_name") or "Unknown")
     item["host"] = urlparse(item.get("url") or "").netloc.replace("www.", "")
     item["summary_text"] = truncate(item.get("summary") or "", 300)
@@ -105,6 +106,47 @@ def edition_index() -> list[dict[str, Any]]:
             }
         )
     return editions
+
+
+# Geographic buckets used by the dashboard's region filter. Derived from the
+# item's tags plus a few well-known country/regulator keywords so that older
+# rows (classified before a tag existed) still land in the right bucket.
+REGION_LABELS = {
+    "india": "India",
+    "uk": "UK",
+    "eu": "Europe",
+    "us": "US",
+    "asia": "Asia-Pacific",
+    "other": "Other",
+}
+
+REGION_KEYWORDS = {
+    "india": ["india", "cdsco", "nppa", "htain", "biodeal"],
+    "uk": ["united kingdom", " uk ", "nice", "mhra", "nhs"],
+    "eu": ["european", "europe", "ema", "eu hta", "joint clinical assessment", "jca", "g-ba", "has "],
+    "us": ["united states", " u.s.", "medicare", "medicaid", "fda", "cms", "340b"],
+    "asia": ["korea", "japan", "china", "singapore", "australia", "asia", "apac", "taiwan", "hong kong"],
+}
+
+
+def derive_region(item: dict[str, Any]) -> str:
+    tags = [str(t).lower() for t in (item.get("tags") or [])]
+    text = " ".join(
+        [item.get("title") or "", item.get("summary") or "", item.get("source_name") or "", item.get("author") or ""]
+    ).lower()
+    text = f" {text} "
+    if "india" in tags:
+        return "india"
+    if "uk" in tags:
+        return "uk"
+    if "eu" in tags or "eu hta" in tags:
+        return "eu"
+    if "us" in tags:
+        return "us"
+    for region, words in REGION_KEYWORDS.items():
+        if any(w in text for w in words):
+            return region
+    return "other"
 
 
 def matches(item: dict[str, Any], needle: str) -> bool:
@@ -177,6 +219,7 @@ def index(
     request: Request,
     date: str | None = None,
     category: str | None = None,
+    region: str | None = None,
     q: str | None = None,
 ) -> HTMLResponse:
     editions = edition_index()
@@ -187,12 +230,16 @@ def index(
 
     all_count = len(items)
     counts = Counter(item["category"] for item in items)
+    region_counts = Counter(item["region"] for item in items)
     active_category = category if category in config.categories else None
+    active_region = region if region in REGION_LABELS else None
     needle = (q or "").strip()
 
     filtered = items
     if active_category:
         filtered = [item for item in filtered if item["category"] == active_category]
+    if active_region:
+        filtered = [item for item in filtered if item["region"] == active_region]
     if needle:
         filtered = [item for item in filtered if matches(item, needle.lower())]
 
@@ -226,6 +273,9 @@ def index(
         "categories": config.categories,
         "category_order": CATEGORY_ORDER,
         "active_category": active_category,
+        "active_region": active_region,
+        "region_counts": dict(region_counts),
+        "regions": REGION_LABELS,
         "q": needle,
         "editions": editions,
         "newer": newer,
@@ -252,8 +302,26 @@ def archive(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request=request, name="archive.html", context=context)
 
 
-@app.get("/saved", response_class=HTMLResponse)
-def saved(request: Request) -> HTMLResponse:
+@app.get("/region/{slug}", response_class=HTMLResponse)
+def region(request: Request, slug: str) -> HTMLResponse:
+    if slug not in REGION_LABELS:
+        raise HTTPException(status_code=404, detail="Unknown region")
+    rows = db.all_items()
+    items = [present(r) for r in rows]
+    items = [i for i in items if i and i.get("region") == slug]
+    items.sort(key=lambda i: i.get("published_dt") or i.get("first_seen_dt"), reverse=True)
+    items = items[:80]
+    context = {
+        "request": request,
+        "app": config,
+        "region_key": slug,
+        "region_label": REGION_LABELS[slug],
+        "items": items,
+        "categories": config.categories,
+        "page": "region",
+        "last_run": run_state(),
+    }
+    return templates.TemplateResponse(request=request, name="region.html", context=context)
     items = present_many(db.get_saved())
     context = {
         "request": request,

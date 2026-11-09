@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "macros.html" import story %}
+{% block title %}{{ regions_label if false else region_label }} updates — {{ app.name }}{% endblock %}
+
+{% block content %}
+<section class="masthead masthead-compact">
+  <div class="masthead-copy">
+    <p class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>Region · {{ region_label }}</p>
+    <h1>{{ region_label }} updates.</h1>
+    <p class="standfirst">Every story tagged to {{ region_label }} across all editions, newest first. {{ items|length }} item{{ '' if items|length == 1 else 's' }}.</p>
+  </div>
+  <div class="edition-stats" aria-label="Region statistics">
+    <div class="stat"><strong>{{ items|length }}</strong><span>stories</span></div>
+  </div>
+</section>
+
+{% if items %}
+<div class="stories stories-standalone">
+  {% for item in items %}{{ story(item) }}{% endfor %}
+</div>
+{% else %}
+<section class="empty-state">
+  <p class="empty-kicker">Nothing filed yet</p>
+  <h2>No {{ region_label }} stories yet.</h2>
+  <p>As new editions are published, anything tagged to {{ region_label }} will collect here.</p>
+  <div class="empty-actions"><a class="btn-primary" href="/">Back to today</a></div>
+</section>
+{% endif %}
+{% endblock %}

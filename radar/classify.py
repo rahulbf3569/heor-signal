@@ -190,6 +190,7 @@ TAGS: list[tuple[str, re.Pattern[str]]] = [
     ("Oncology", re.compile(r"\boncology\b|\bcancer\b|\btumou?r\b|\bcarcinoma\b", re.I)),
     ("Rare disease", re.compile(r"\brare disease|\borphan\b", re.I)),
     ("India", re.compile(r"\bindia\b|\bcdsco\b|\bnppa\b|\bhtain\b", re.I)),
+    ("Asia", re.compile(r"\basia(n|pacific)?\b|\bkorea(n)?\b|\bjapan(ese)?\b|\bchina|chinese\b|\bsingapore\b|\baustralia(n)?\b|\bapac\b|\btaiwan\b", re.I)),
     ("US", re.compile(r"\bunited states\b|\bu\.s\.\b|\bmedicare\b|\bmedicaid\b|\bcms\b|\bfda\b", re.I)),
     ("UK", re.compile(r"\bunited kingdom\b|\buk\b|\bnice\b|\bnhs\b|\bmhra\b", re.I)),
     ("EU", re.compile(r"\beuropean union\b|\beu\b|\bema\b", re.I)),

@@ -231,7 +231,15 @@ button, input, textarea { font: inherit; color: inherit; }
 .chip-count { font-size: 11px; color: var(--faint); font-weight: 500; }
 .chip.is-active .chip-count { color: rgba(255,255,255,0.7); }
 
-.filter-note {
+.region-bar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 12px 0 4px; border-bottom: 1px solid var(--line);
+}
+.region-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--faint);
+}
+.chips-region .chip { background: var(--paper-flat); }
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   margin-top: 18px; padding: 12px 16px;
   border-left: 3px solid var(--teal); background: var(--teal-soft);
@@ -529,3 +537,7 @@ button, input, textarea { font: inherit; color: inherit; }
   .page { max-width: none; padding: 0; }
   .top-story, .source-card, .story { break-inside: avoid; }
 }
+
+.chip.is-empty { opacity: 0.45; }
+.region-browse { font-size: 12px; font-weight: 700; color: var(--teal-dark); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; text-decoration: none; }
+.region-browse:hover { text-decoration: underline; }

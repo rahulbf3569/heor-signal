@@ -44,7 +44,7 @@
   </div>
 
   <nav class="chips" aria-label="Filter by category">
-    <a class="chip {{ 'is-active' if not active_category }}" href="/?date={{ edition_date }}{% if q %}&q={{ q|urlencode }}{% endif %}">
+    <a class="chip {{ 'is-active' if not active_category }}" href="/?date={{ edition_date }}{% if active_region %}&region={{ active_region }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}">
       All <span class="chip-count">{{ all_count }}</span>
     </a>
     {% for key in category_order %}
@@ -53,7 +53,7 @@
       {% if count %}
       <a class="chip {{ 'is-active' if active_category == key }}"
          style="--chip: {{ cat.color }}"
-         href="/?date={{ edition_date }}&category={{ key }}{% if q %}&q={{ q|urlencode }}{% endif %}">
+         href="/?date={{ edition_date }}&category={{ key }}{% if active_region %}&region={{ active_region }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}">
         <span class="chip-dot" aria-hidden="true"></span>{{ cat.short }} <span class="chip-count">{{ count }}</span>
       </a>
       {% endif %}
@@ -61,12 +61,35 @@
   </nav>
 </div>
 
+<div class="region-bar">
+  <span class="region-label">Region</span>
+  <nav class="chips chips-region" aria-label="Filter by region">
+    <a class="chip chip-region {{ 'is-active' if not active_region }}" href="/?date={{ edition_date }}{% if active_category %}&category={{ active_category }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}">
+      All regions <span class="chip-count">{{ items|length }}</span>
+    </a>
+    {% for key, label in regions.items() %}
+      {% set count = region_counts.get(key, 0) %}
+      {% if key != 'other' or count > 0 %}
+      <a class="chip chip-region {{ 'is-active' if active_region == key }} {{ 'is-empty' if count == 0 }}"
+         href="/?date={{ edition_date }}&region={{ key }}{% if active_category %}&category={{ active_category }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}">
+        {{ label }} <span class="chip-count">{{ count }}</span>
+      </a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+  {% if active_region %}
+  <a class="region-browse" href="/region/{{ active_region }}">Browse all {{ regions[active_region] }} updates across editions →</a>
+  {% endif %}
+</div>
+
 {% if q or active_category %}
 <div class="filter-note">
   <p>
     {% if q %}Searching for <strong>“{{ q }}”</strong>{% endif %}
-    {% if q and active_category %} in {% endif %}
+    {% if q and (active_category or active_region) %} in {% endif %}
     {% if active_category %}<strong>{{ categories[active_category].label }}</strong>{% endif %}
+    {% if active_category and active_region %} · {% endif %}
+    {% if active_region %}<strong>{{ regions[active_region] }}</strong>{% endif %}
     <span class="filter-count">{{ filtered|length }} result{{ '' if filtered|length == 1 else 's' }}</span>
   </p>
   <a href="/?date={{ edition_date }}">Clear filters ×</a>
