@@ -306,7 +306,15 @@ def toggle_save(item_id: str) -> JSONResponse:
 @app.post("/api/update")
 def trigger_update() -> JSONResponse:
     return JSONResponse(
-        {"ok": False, "running": False, "message": "Updates run locally; this deployment is read-only."},
+        {
+            "ok": False,
+            "running": False,
+            "message": (
+                "This hosted copy is read-only. Updates run automatically every day "
+                "via GitHub Actions. To refresh now, run `python run.py daily` locally "
+                "or trigger the workflow on GitHub."
+            ),
+        },
         status_code=503,
     )
 

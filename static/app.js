@@ -25,7 +25,7 @@
         button.setAttribute("aria-label", saved ? "Remove from saved" : "Save story");
         if (label) label.textContent = saved ? "Saved" : "Save";
       } catch (error) {
-        if (label) label.textContent = "Retry";
+        if (label) label.textContent = "Read-only";
         button.setAttribute("aria-pressed", previous ? "true" : "false");
         window.setTimeout(() => {
           if (label) label.textContent = previous ? "Saved" : "Save";
@@ -110,8 +110,14 @@
     showBar("Starting update…");
     try {
       const response = await api.update();
-      if (!response.ok) throw new Error("update failed");
-      await response.json();
+      let data = {};
+      try { data = await response.json(); } catch (e) {}
+      if (!response.ok) {
+        setLoading(false);
+        showBar(data.message || "Could not start the update", true);
+        window.setTimeout(hideBar, 14000);
+        return;
+      }
       pollStatus();
     } catch (error) {
       setLoading(false);
