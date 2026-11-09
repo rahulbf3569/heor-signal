@@ -6,17 +6,21 @@
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}{{ app.name }} — {{ app.tagline }}{% endblock %}</title>
   <meta name="description" content="{{ app.tagline }} A daily brief on HEOR, real-world evidence, market access, HTA, clinical research and policy.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23171612'/%3E%3Cpath d='M0 32 32 0v32z' fill='%23a8412a'/%3E%3C/svg%3E">
+  <link rel="icon" href="{{ url_for('static', path='marksman-logo.png') }}">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="/" aria-label="{{ app.name }} home">
-      <span class="brand-mark" aria-hidden="true"></span>
-      <span class="brand-name">{{ app.name }}</span>
+    <a class="brand" href="/" aria-label="MarksMan Healthcare home">
+      <img class="brand-logo" src="{{ url_for('static', path='marksman-logo.png') }}" alt="MarksMan Healthcare" width="30" height="30">
+      <span class="brand-name">MarksMan Healthcare</span>
+      <span class="brand-sub">HEOR Signal</span>
     </a>
 
     <nav class="nav" aria-label="Sections">
@@ -32,6 +36,10 @@
         <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.25" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m15.4 15.4 4.1 4.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         <input id="q" name="q" value="{{ q|default('') }}" placeholder="Search" autocomplete="off" spellcheck="false">
       </form>
+      <button id="feedback" class="feedback-btn" type="button" title="Send feedback">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Feedback</span>
+      </button>
       <button id="refresh" class="refresh-btn" type="button" title="Fetch new items now">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 4v4.5h-4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>Refresh</span>
@@ -62,6 +70,18 @@
     </p>
   </div>
 </footer>
+
+<div id="feedback-overlay" class="feedback-overlay" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+  <div class="feedback-modal">
+    <h2 id="feedback-title">Share your feedback</h2>
+    <p>Tell us what you'd like to see more (or less) of in the daily brief. Your note opens in your email client addressed to the MarksMan team.</p>
+    <textarea id="feedback-text" placeholder="e.g. More HTA decisions from PBAC, fewer conference promos, add a section on pricing reforms..."></textarea>
+    <div class="feedback-actions">
+      <button type="button" class="btn-ghost" id="feedback-cancel">Cancel</button>
+      <button type="button" class="btn-primary" id="feedback-send">Send feedback</button>
+    </div>
+  </div>
+</div>
 
 <script src="{{ url_for('static', path='app.js') }}" defer></script>
 </body>

@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 
 from radar.config import load_config
 from radar.db import Database, row_to_item
-from radar.digest import date_label, digest_stats, grouped
+from radar.digest import date_label, digest_stats, grouped, _top_priority
 from radar.pipeline import CATEGORY_ORDER, select_digest, today_key, update
 from radar.util import compact_date, local_now, parse_datetime, relative_time, truncate, utcnow
 
@@ -197,7 +197,7 @@ def index(
         filtered = [item for item in filtered if matches(item, needle.lower())]
 
     show_top = bool(filtered) and not active_category and not needle
-    top = max(filtered, key=lambda i: float(i.get("score") or 0)) if show_top else None
+    top = max(filtered, key=_top_priority) if show_top else None
     body_items = [item for item in filtered if top is None or item["id"] != top["id"]]
 
     index_now = valid_dates.index(selected_date) if selected_date in valid_dates else -1

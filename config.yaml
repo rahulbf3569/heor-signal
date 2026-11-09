@@ -1,6 +1,6 @@
 app:
-  name: HEOR Signal
-  tagline: The daily read on evidence, access & policy.
+  name: MarksMan HEOR Signal
+  tagline: Evidence. Insights. Access.
   timezone: Asia/Kolkata
   max_items: 42
   min_score: 5.0

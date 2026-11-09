@@ -160,4 +160,39 @@
       input.select();
     }
   });
+  // --- Feedback modal ------------------------------------------------------
+  const feedbackBtn = document.getElementById("feedback");
+  const feedbackOverlay = document.getElementById("feedback-overlay");
+  const feedbackText = document.getElementById("feedback-text");
+  const feedbackCancel = document.getElementById("feedback-cancel");
+  const feedbackSend = document.getElementById("feedback-send");
+
+  function openFeedback() {
+    if (!feedbackOverlay) return;
+    feedbackOverlay.classList.add("is-open");
+    if (feedbackText) { feedbackText.value = ""; feedbackText.focus(); }
+  }
+  function closeFeedback() {
+    if (feedbackOverlay) feedbackOverlay.classList.remove("is-open");
+  }
+  if (feedbackBtn) feedbackBtn.addEventListener("click", openFeedback);
+  if (feedbackCancel) feedbackCancel.addEventListener("click", closeFeedback);
+  if (feedbackOverlay) {
+    feedbackOverlay.addEventListener("click", (e) => {
+      if (e.target === feedbackOverlay) closeFeedback();
+    });
+  }
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && feedbackOverlay && feedbackOverlay.classList.contains("is-open")) closeFeedback();
+  });
+  if (feedbackSend) {
+    feedbackSend.addEventListener("click", () => {
+      const body = (feedbackText && feedbackText.value.trim()) || "";
+      const subject = encodeURIComponent("HEOR Signal — feedback");
+      const content = encodeURIComponent(body || "(no message)");
+      const mailto = `mailto:enquiry@marksmanhealthcare.com?subject=${subject}&body=${content}`;
+      window.location.href = mailto;
+      closeFeedback();
+    });
+  }
 })();

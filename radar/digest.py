@@ -4,12 +4,45 @@ from collections import Counter, OrderedDict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
+import re as _re
 
 from .config import Config
 from .pipeline import CATEGORY_ORDER
 from .util import clean_text, relative_time, truncate
 
 SECTION_ORDER = CATEGORY_ORDER
+
+
+def _is_personal_announcement(item: dict[str, Any]) -> bool:
+    text = f"{item.get('title') or ''} {item.get('summary') or ''}".lower()
+    return bool(_re.search(
+        r"\b(i'?ve (joined|started)|i am (joining|starting)|starting (a )?new (role|chapter|position)|"
+        r"joined the team|joined our team|welcome to (our|the) team|thrilled to (join|announce)|"
+        r"excited to (join|announce)|happy to (share|announce) (that i|I've|i have)|"
+        r"i'?m (thrilled|excited|happy|pleased) to (share|announce|join))\b",
+        text,
+    ))
+
+
+def _top_priority(item: dict[str, Any]) -> float:
+    score = float(item.get("score") or 0)
+    source_type = item.get("source_type") or ""
+    if source_type in {"official", "research"}:
+        score += 2.0
+    elif source_type == "news":
+        score += 0.6
+    if _is_personal_announcement(item):
+        score -= 6.0
+    if source_type == "linkedin" and _re.search(
+        r"\b(counting down|excited to share|meet (us|me) at|join us at|see you (at|in)|"
+        r"will be there|preview series|save the date|arrived at|we'?ve (arrived|landed)|"
+        r"i'?m at|i am at|book time|send (a )?message to|connecting,? collaborating|"
+        r"celebrating women|women in (heor|health)|i'?ll be presenting|i'?m presenting|"
+        r"presenting at (ispor|the)|podium session|poster session)\b",
+        f"{item.get('title') or ''} {item.get('summary') or ''}".lower(),
+    ):
+        score -= 5.0
+    return score
 
 
 def date_label(value: str) -> str:
@@ -70,7 +103,7 @@ def grouped(items: list[dict[str, Any]]) -> "OrderedDict[str, list[dict[str, Any
 
 def render_markdown(config: Config, items: list[dict[str, Any]], date: str) -> str:
     stats = digest_stats(items)
-    top = max(items, key=lambda i: float(i.get("score") or 0)) if items else None
+    top = max(items, key=_top_priority) if items else None
     rest = [item for item in items if top is None or item["id"] != top["id"]]
 
     lines: list[str] = [
@@ -145,7 +178,7 @@ def render_telegram_messages(
     if not items:
         return []
 
-    top = max(items, key=lambda i: float(i.get("score") or 0))
+    top = max(items, key=_top_priority)
     rest = [item for item in items if item["id"] != top["id"]]
 
     blocks: list[str] = [
@@ -189,7 +222,7 @@ def render_telegram_messages(
 
 def build_edition(config: Config, items: list[dict[str, Any]], date: str) -> dict[str, Any]:
     stats = digest_stats(items)
-    top = max(items, key=lambda i: float(i.get("score") or 0)) if items else None
+    top = max(items, key=_top_priority) if items else None
     return {
         "date": date,
         "label": date_label(date),

@@ -239,7 +239,9 @@ SOFT_PENALTIES: list[tuple[str, float]] = [
     (r"\b(recall|food|toddler|snack|pet food|veterinary|animal)\b", -5.0),
     (r"\b(podcast|webinar series|episode \d+)\b", -1.0),
     (r"\b(our (latest|new) (perspective|report|whitepaper|guide)|read (our|the) (latest|full)|download (our|the))\b", -0.9),
-    (r"\.\.\.|…", -0.9),
+    (r"\b(i'?ve (joined|started)|i am (joining|starting)|starting (a )?new (role|chapter|position)|new (role|chapter|position)|joined the team|joined our team|welcome to (our|the) team|thrilled to (join|announce)|excited to (join|announce)|happy to (share|announce) (that i|I've|i have)|i'?m (thrilled|excited|happy|pleased) to (share|announce|join))\b", -6.0),
+    (r"\b(joined ispor|isporeurope|ispor .{0,20} (for me|for you|this year|this time)|my first ispor|first ispor)\b", -2.5),
+    (r"\b(arrived at|we'?ve (arrived|landed)|i'?m at|i am at|landed at|this week (at|in)|book time|send (a )?message to|stop by (our|the) (booth|stand)|come (say hi|meet us)|connecting,? collaborating|celebrating women|women in (heor|health)|i'?ll be presenting|i'?m presenting|presenting at (ispor|the)|podium session|poster session)\b", -4.0),
 ]
 
 HARD_FOOD = re.compile(r"\b(recall|toddler|snack|pet food|veterinary|animal|food)\b", re.I)
