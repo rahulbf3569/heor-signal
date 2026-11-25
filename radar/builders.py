@@ -132,7 +132,14 @@ def _stage(text: str) -> str:
     return ""
 
 
-def detect_builder(title: str, summary: str) -> dict[str, Any] | None:
+# Pharma/life-science context strong enough to keep an AI launch or round
+# that names no specific segment (e.g. "life sciences AI platform").
+LIFESCI = re.compile(
+    r"\b(pharma\w*|biopharma|biotech|life sciences?|drug develop\w*)\b", re.I
+)
+
+
+def detect_builder(title: str, summary: str, source_type: str = "news") -> dict[str, Any] | None:
     """Return {"segment", "stage", "watch", "strength"} for a builder story, else None."""
     text = f"{title} {summary}"
     watch = _watch_hit(text)
@@ -149,7 +156,13 @@ def detect_builder(title: str, summary: str) -> dict[str, Any] | None:
         strength = 2 if stage else 1
     elif has_ai and segment and stage:
         strength = 2
+    elif has_ai and stage and LIFESCI.search(text):
+        strength = 1
     else:
+        return None
+    # LinkedIn "launch" chatter is mostly campaigns and events; keep posts that
+    # report a round, a deal, or name a tracked company.
+    if source_type == "linkedin" and not watch and not stage.startswith(("Funding", "Acquisition")):
         return None
     return {
         "segment": segment or "AI in life sciences",

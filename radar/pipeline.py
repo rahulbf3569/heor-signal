@@ -447,6 +447,28 @@ def _story_key(title: str) -> tuple[str, ...]:
     return tuple(normalized[:9])
 
 
+_GENERIC_LEADS = {
+    "ai", "new", "the", "a", "an", "how", "why", "what", "healthcare", "health", "physical",
+    "startup", "startups", "exclusive", "report", "pharma", "biotech", "agentic", "generative",
+}
+
+
+def _builder_key(item: dict[str, Any]) -> tuple[str, ...] | None:
+    """Company + stage, so several outlets covering one launch or round count once."""
+    words = re.findall(r"[A-Za-z0-9][\w.+-]*", item.get("title") or "")
+    if not words or words[0].lower() in _GENERIC_LEADS:
+        return None
+    tags = item.get("tags") or []
+    if isinstance(tags, str):
+        try:
+            tags = json.loads(tags)
+        except Exception:
+            tags = []
+    stage = (tags[0] if tags else "").split(" ")[0]
+    company = re.sub(r"['’]s$", "", words[0].lower())
+    return ("builder", company, stage)
+
+
 def select_digest(config: Config, db: Database, date: str | None = None) -> list[dict[str, Any]]:
     """Pick today's edition. Safe to run repeatedly; the selection is rebuilt."""
     date = date or today_key(config)
@@ -505,6 +527,9 @@ def select_digest(config: Config, db: Database, date: str | None = None) -> list
         key = _story_key(item.get("title") or "")
         if len(key) >= 6 and key in seen_stories:
             continue
+        builder_key = _builder_key(item) if is_builder else None
+        if builder_key and builder_key in seen_stories:
+            continue
 
         query_cap = SOURCE_QUERY_CAPS.get(source_id)
         if query_cap and per_query.get(source_id, 0) >= query_cap:
@@ -525,6 +550,8 @@ def select_digest(config: Config, db: Database, date: str | None = None) -> list
         per_query[source_id] = per_query.get(source_id, 0) + 1
         if len(key) >= 6:
             seen_stories.add(key)
+        if builder_key:
+            seen_stories.add(builder_key)
         if is_linkedin and not is_builder:
             linkedin += 1
 

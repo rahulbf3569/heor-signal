@@ -330,7 +330,7 @@ def classify(
     # on their own terms: launches and funding news are the point here, so the
     # press-release penalties below do not apply.
     if source_type not in {"official", "research"}:
-        builder = detect_builder(title, summary)
+        builder = detect_builder(title, summary, source_type)
         if builder:
             return _builder_result(builder, text, source_type, published_at, now)
 
