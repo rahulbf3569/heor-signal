@@ -165,6 +165,13 @@ class Database:
             updates["score"] = item["score"]
             updates["category"] = item.get("category", existing["category"])
             updates["tags"] = item.get("tags", existing["tags"])
+        elif (
+            item.get("tags")
+            and item.get("category") == existing["category"]
+            and item["tags"] != existing["tags"]
+        ):
+            # Same story, same section: keep tags current with the classifier.
+            updates["tags"] = item["tags"]
         if item.get("summary") and (
             not existing["summary"] or len(item["summary"]) > len(existing["summary"])
         ):
