@@ -419,14 +419,13 @@ sources:
     query: site:linkedin.com/posts AI (HEOR OR RWE OR "systematic review" OR "regulatory writing" OR "clinical trial") (launch OR launched OR introducing OR raised) when:7d
     limit: 14
 
+  # tech.eu's own feed returns 403 to GitHub's servers, so read it through Google News.
   - id: techeu
     name: tech.eu
-    type: rss
+    type: google_news
     category: builders
-    url: https://tech.eu/feed/
-    limit: 30
-    max_age_days: 7
-    source_type: news
+    query: site:tech.eu (health OR pharma OR biotech OR clinical OR medtech) when:7d
+    limit: 20
 
   - id: pulse2
     name: Pulse 2.0
