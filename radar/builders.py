@@ -36,7 +36,7 @@ SEGMENTS: list[tuple[str, re.Pattern[str]]] = [
     ("HTA & JCA", re.compile(
         r"\b(health technology assessment|hta|joint clinical assessment|jca|amnog|nice submissions?)\b", re.I)),
     ("Regulatory & writing", re.compile(
-        r"\b(regulatory (writing|affairs|submissions?|documents?|documentation|intelligence|platform)|"
+        r"\b(regulatory (writing|affairs|submissions?|documents?|documentation|intelligence|platform|ai|tech)|"
         r"medical writ\w+|clinical study reports?|csrs?|ind|nda|bla|ectd|submission (package|documents?))\b",
         re.I)),
     ("RWE & data", re.compile(
@@ -49,8 +49,9 @@ SEGMENTS: list[tuple[str, re.Pattern[str]]] = [
 ]
 
 FUNDING = re.compile(
-    r"\b(raises?|raised|raising|secures?|secured|closes?|closed|lands?|bags?|nabs?)\b.{0,80}"
-    r"\b(funding|financing|round|seed|series [a-f]|investment|million|\$|€|£)|"
+    r"\b(raises?|raised|raising|secures?|secured|closes?|closed|lands?|bags?|nabs?|rakes? in|"
+    r"nets?|garners?|snags?|pulls? in|attracts?|reels? in)\b.{0,80}"
+    r"(?:\b(?:funding|financing|round|seed|series [a-f]|investment|million|billion)\b|[$€£]\s?\d)|"
     r"\b(pre[- ]seed|seed round|seed funding|series [a-f]( round| funding)?|venture (funding|round))\b",
     re.I,
 )

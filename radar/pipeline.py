@@ -117,7 +117,9 @@ def _fresh_enough(item: dict[str, Any], now: datetime) -> bool:
     # The daily edition should not carry month-old conference notices just
     # because the source keeps a long archive window.
     source_type = item.get("source_type") or "news"
-    if source_type == "linkedin":
+    if item.get("category") == "builders":
+        max_age = min(max_age, 14)
+    elif source_type == "linkedin":
         max_age = min(max_age, 7)
     elif source_type == "research":
         max_age = min(max_age, 21)

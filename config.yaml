@@ -348,33 +348,49 @@ sources:
   # Broad feeds are read whole; radar/builders.py keeps only stories that pair
   # AI with HEOR/RWE/SLR/regulatory/HTA/CRO work and report a launch, funding
   # round, acquisition or partnership (or name a watchlist company).
-  - id: bld_funding
-    name: Builders · funding
+  # Short queries: Google News returns far more for several simple searches
+  # than for one long boolean query.
+  - id: bld_rwe
+    name: Builders · RWE
     type: google_news
     category: builders
-    query: >-
-      (AI OR "artificial intelligence" OR agentic OR GenAI OR LLM)
-      ("real-world evidence" OR "real-world data" OR HEOR OR "health economics"
-      OR "systematic review" OR "evidence synthesis" OR "regulatory writing"
-      OR "medical writing" OR "regulatory affairs" OR "clinical trial" OR "clinical trials"
-      OR "health technology assessment" OR "market access")
-      (raises OR funding OR seed OR "Series A" OR "Series B" OR "Series C" OR acquires OR acquisition)
-      when:7d
-    limit: 25
+    query: AI ("real-world evidence" OR "real-world data") (raises OR launches OR acquires OR startup) when:7d
+    limit: 15
 
-  - id: bld_launch
-    name: Builders · launches
+  - id: bld_slr
+    name: Builders · SLR
     type: google_news
     category: builders
-    query: >-
-      (AI OR "artificial intelligence" OR agentic OR GenAI OR LLM)
-      ("real-world evidence" OR "real-world data" OR HEOR OR "systematic review"
-      OR "literature review" OR "evidence synthesis" OR "regulatory submission"
-      OR "medical writing" OR "health technology assessment" OR "protocol design"
-      OR "clinical data platform")
-      (launches OR unveils OR introduces OR debuts OR "now available" OR partnership)
-      when:7d
-    limit: 25
+    query: AI ("systematic review" OR "literature review" OR "evidence synthesis") (launches OR raises OR platform OR startup) when:14d
+    limit: 15
+
+  - id: bld_regulatory
+    name: Builders · regulatory
+    type: google_news
+    category: builders
+    query: AI ("regulatory writing" OR "medical writing" OR "regulatory submissions" OR "regulatory affairs") (raises OR seed OR launches OR platform) when:14d
+    limit: 15
+
+  - id: bld_trials
+    name: Builders · trials
+    type: google_news
+    category: builders
+    query: '"clinical trial" AI startup (raises OR seed OR "Series A" OR "Series B" OR launches) when:7d'
+    limit: 20
+
+  - id: bld_heor
+    name: Builders · HEOR
+    type: google_news
+    category: builders
+    query: AI (HEOR OR "health economics" OR "market access" OR "health technology assessment") (launches OR platform OR startup OR raises) when:14d
+    limit: 15
+
+  - id: bld_cro_deals
+    name: Builders · CRO deals
+    type: google_news
+    category: builders
+    query: AI (CRO OR "contract research") (acquires OR acquisition OR partnership OR launches) pharma when:7d
+    limit: 15
 
   - id: bld_watch_a
     name: Builders · watchlist
@@ -400,12 +416,7 @@ sources:
     name: LinkedIn · Builders
     type: google_news
     category: builders
-    query: >-
-      site:linkedin.com/posts (AI OR agentic OR GenAI OR LLM)
-      (HEOR OR RWE OR "real-world evidence" OR "systematic review" OR SLR
-      OR "regulatory writing" OR "medical writing" OR HTA OR "clinical trial")
-      (launch OR launched OR raised OR funding OR seed OR "Series A" OR acquired OR introducing)
-      when:7d
+    query: site:linkedin.com/posts AI (HEOR OR RWE OR "systematic review" OR "regulatory writing" OR "clinical trial") (launch OR launched OR introducing OR raised) when:7d
     limit: 14
 
   - id: techeu

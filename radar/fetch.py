@@ -157,7 +157,8 @@ def fetch_google_news(source: Source, config: Config) -> SourceResult:
                 "source_name": source_name,
                 "source_type": "linkedin" if is_linkedin else "news",
                 "category_hint": source.category,
-                "max_age_days": 6 if is_linkedin else 5,
+                # Builder news (launches, rounds) stays useful for two weeks.
+                "max_age_days": 14 if source.category == "builders" else (6 if is_linkedin else 5),
                 "raw": {
                     "query": source.query,
                     "publisher": publisher,

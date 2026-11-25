@@ -447,7 +447,7 @@ def _builder_result(
     extra = [
         tag
         for tag in detect_tags(text, "builders")
-        if tag != "AI" and tag.split()[0].lower() not in seg
+        if tag not in {"AI", "Policy"} and tag.split()[0].lower() not in seg
     ]
     tags = [builder["stage"], builder["segment"]] + extra
     return {
