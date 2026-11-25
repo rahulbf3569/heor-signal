@@ -4,6 +4,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
+from .builders import detect_builder
 from .util import clean_text
 
 # Phrases that make an item relevant to this brief. These are deliberately
@@ -325,6 +326,19 @@ def classify(
     if HARD_FOOD.search(text) and not _has(r"\b(drug|medicine|pharma|clinical|patient|oncology|therapy|treatment)\b", text):
         return None
 
+    # Companies building AI tools for this field get their own section, scored
+    # on their own terms: launches and funding news are the point here, so the
+    # press-release penalties below do not apply.
+    if source_type not in {"official", "research"}:
+        builder = detect_builder(title, summary)
+        if builder:
+            return _builder_result(builder, text, source_type, published_at, now)
+
+    # Sources filed under "builders" (broad startup and newswire feeds) only
+    # contribute builder stories; the rest of their output is off-topic.
+    if default_category not in CATEGORY_PATTERNS:
+        return None
+
     health_hits = _matches(HEALTH_PATTERNS, text)
     core_hits = _matches(CORE_PATTERNS, text)
     if health_hits == 0 and core_hits == 0:
@@ -402,4 +416,45 @@ def classify(
         "score": round(max(0.0, score), 2),
         "core_hits": core_hits,
         "health_hits": health_hits,
+    }
+
+
+def _builder_result(
+    builder: dict[str, Any],
+    text: str,
+    source_type: str,
+    published_at: datetime | None,
+    now: datetime,
+) -> dict[str, Any]:
+    score = 5.4 + 1.4 * builder["strength"]
+    if builder["stage"].startswith(("Funding", "Acquisition")):
+        score += 0.6
+    if source_type == "linkedin":
+        score -= 0.4
+    if published_at:
+        age_hours = max(0.0, (now - published_at).total_seconds() / 3600)
+        if age_hours <= 48:
+            score += 0.8
+        elif age_hours > 24 * 10:
+            score -= 1.5
+    if EVENT_PROMO.search(text):
+        score -= 3.0
+    for pattern, penalty in SOFT_PENALTIES:
+        # Keep only the penalties for job posts, personal news and junk.
+        if penalty <= -4.0 and re.search(pattern, text, re.I):
+            score += penalty
+    seg = builder["segment"].lower()
+    extra = [
+        tag
+        for tag in detect_tags(text, "builders")
+        if tag != "AI" and tag.split()[0].lower() not in seg
+    ]
+    tags = [builder["stage"], builder["segment"]] + extra
+    return {
+        "category": "builders",
+        "tags": list(dict.fromkeys(tags))[:4],
+        "score": round(max(0.0, score), 2),
+        "core_hits": 0,
+        "health_hits": 0,
+        "builder": builder,
     }

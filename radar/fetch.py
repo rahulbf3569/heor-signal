@@ -174,6 +174,8 @@ def fetch_rss(source: Source, config: Config) -> SourceResult:
     if getattr(feed, "bozo", False) and not feed.entries:
         raise RuntimeError(f"RSS parse error: {feed.bozo_exception}")
     now = utcnow()
+    # Regulators' feeds are "official"; trade press feeds set source_type: news.
+    source_type = str(source.extra.get("source_type") or "official")
     items: list[dict[str, Any]] = []
     for entry in feed.entries:
         published = parse_datetime(
@@ -198,14 +200,14 @@ def fetch_rss(source: Source, config: Config) -> SourceResult:
                 "author": clean_text(entry.get("author", "")),
                 "source_id": source.id,
                 "source_name": source.name,
-                "source_type": "official",
+                "source_type": source_type,
                 "category_hint": source.category,
                 "max_age_days": source.max_age_days,
                 "raw": {"feed_title": feed.feed.get("title", "")},
             }
         )
     items.sort(key=lambda x: x.get("published_at") or now, reverse=True)
-    return SourceResult(source.id, source.name, "official", items[: source.limit])
+    return SourceResult(source.id, source.name, source_type, items[: source.limit])
 
 
 def fetch_nice(source: Source, config: Config) -> SourceResult:

@@ -53,6 +53,7 @@ class Config:
     max_per_source: int
     max_per_category: int
     max_linkedin_enrich: int
+    max_builders: int
     decode_limit: int
     database: Path
     digest_dir: Path
@@ -132,6 +133,7 @@ def load_config(path: str | Path | None = None) -> Config:
         max_per_source=int(app.get("max_per_source", 5)),
         max_per_category=int(app.get("max_per_category", 9)),
         max_linkedin_enrich=int(app.get("max_linkedin_enrich", 16)),
+        max_builders=int(app.get("max_builders", 10)),
         decode_limit=int(app.get("decode_limit", 120)),
         database=database,
         digest_dir=digest_dir,

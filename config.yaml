@@ -9,7 +9,8 @@ app:
   max_per_source: 5
   max_per_category: 9
   max_linkedin_enrich: 20
-  decode_limit: 120
+  max_builders: 10           # AI builders section, on top of max_items
+  decode_limit: 150
   database: data/heor_signal.db
   digest_dir: data/digests
   log_dir: data/logs
@@ -45,6 +46,11 @@ categories:
     short: AI
     color: "#2B6E87"
     blurb: Artificial intelligence where evidence, access and trials meet.
+  builders:
+    label: AI builders
+    short: Builders
+    color: "#1F7A6B"
+    blurb: New AI tools, funding rounds and acquisitions in HEOR, RWE, SLR, regulatory and CRO work.
 
 sources:
   # ---- primary sources we read directly -----------------------------------
@@ -89,9 +95,10 @@ sources:
     type: rss
     category: ai
     url: https://hitconsultant.net/feed/
-    limit: 6
+    limit: 15
     max_age_days: 5
     locale: en
+    source_type: news
 
   # ---- topic searches ------------------------------------------------------
   - id: gnews_heor
@@ -336,3 +343,133 @@ sources:
       AND 2026[PDAT]
     limit: 4
     max_age_days: 30
+
+  # ---- AI builders: who is building AI tools for this field ---------------
+  # Broad feeds are read whole; radar/builders.py keeps only stories that pair
+  # AI with HEOR/RWE/SLR/regulatory/HTA/CRO work and report a launch, funding
+  # round, acquisition or partnership (or name a watchlist company).
+  - id: bld_funding
+    name: Builders · funding
+    type: google_news
+    category: builders
+    query: >-
+      (AI OR "artificial intelligence" OR agentic OR GenAI OR LLM)
+      ("real-world evidence" OR "real-world data" OR HEOR OR "health economics"
+      OR "systematic review" OR "evidence synthesis" OR "regulatory writing"
+      OR "medical writing" OR "regulatory affairs" OR "clinical trial" OR "clinical trials"
+      OR "health technology assessment" OR "market access")
+      (raises OR funding OR seed OR "Series A" OR "Series B" OR "Series C" OR acquires OR acquisition)
+      when:7d
+    limit: 25
+
+  - id: bld_launch
+    name: Builders · launches
+    type: google_news
+    category: builders
+    query: >-
+      (AI OR "artificial intelligence" OR agentic OR GenAI OR LLM)
+      ("real-world evidence" OR "real-world data" OR HEOR OR "systematic review"
+      OR "literature review" OR "evidence synthesis" OR "regulatory submission"
+      OR "medical writing" OR "health technology assessment" OR "protocol design"
+      OR "clinical data platform")
+      (launches OR unveils OR introduces OR debuts OR "now available" OR partnership)
+      when:7d
+    limit: 25
+
+  - id: bld_watch_a
+    name: Builders · watchlist
+    type: google_news
+    category: builders
+    query: >-
+      ("Weave Bio" OR "Peer AI" OR LogicFlo OR "Ryght AI" OR PhaseV OR "Lindus Health"
+      OR Biolevate OR "Atropos Health" OR "Nested Knowledge" OR DistillerSR
+      OR "Century Health" OR Navidence) when:14d
+    limit: 15
+
+  - id: bld_watch_b
+    name: Builders · watchlist
+    type: google_news
+    category: builders
+    query: >-
+      (Truveta OR Aetion OR "Cori Clinical" OR MadeAi OR "Estima Scientific"
+      OR "nPhase" OR "Trially AI" OR "Faro Health" OR "AIRA Health" OR "Collate AI"
+      OR "Elicit systematic review" OR "IQVIA.ai") when:14d
+    limit: 15
+
+  - id: li_builders
+    name: LinkedIn · Builders
+    type: google_news
+    category: builders
+    query: >-
+      site:linkedin.com/posts (AI OR agentic OR GenAI OR LLM)
+      (HEOR OR RWE OR "real-world evidence" OR "systematic review" OR SLR
+      OR "regulatory writing" OR "medical writing" OR HTA OR "clinical trial")
+      (launch OR launched OR raised OR funding OR seed OR "Series A" OR acquired OR introducing)
+      when:7d
+    limit: 14
+
+  - id: techeu
+    name: tech.eu
+    type: rss
+    category: builders
+    url: https://tech.eu/feed/
+    limit: 30
+    max_age_days: 7
+    source_type: news
+
+  - id: pulse2
+    name: Pulse 2.0
+    type: rss
+    category: builders
+    url: https://pulse2.com/feed/
+    limit: 30
+    max_age_days: 7
+    source_type: news
+
+  - id: pharmaphorum
+    name: pharmaphorum
+    type: rss
+    category: market_access
+    url: https://www.pharmaphorum.com/rss.xml
+    limit: 20
+    max_age_days: 7
+    source_type: news
+
+  - id: prn_health
+    name: PR Newswire · Health
+    type: rss
+    category: builders
+    url: https://www.prnewswire.com/rss/health-latest-news/health-latest-news-list.rss
+    limit: 30
+    max_age_days: 5
+    source_type: news
+
+# ---- companies to track (from HEOR-AI-Builders-Landscape.pdf, Nov 2026) ----
+# Any story naming one of these, with a stage or an AI mention, lands in the
+# AI builders section. Ambiguous names (Collate, Elicit, Rivia, Klaris) are
+# left to the keyword rules to avoid false matches.
+builders:
+  watchlist:
+    - {name: Estima Scientific, segment: HEOR & access}
+    - {name: MadeAi, segment: HEOR & access}
+    - {name: DistillerSR, segment: SLR & evidence}
+    - {name: Nested Knowledge, segment: SLR & evidence}
+    - {name: EviValue, segment: SLR & evidence}
+    - {name: Cori Clinical, segment: CRO & trials}
+    - {name: Faro Health, segment: CRO & trials}
+    - {name: AIRA Health, segment: CRO & trials}
+    - {name: Ryght AI, segment: CRO & trials}
+    - {name: PhaseV, segment: CRO & trials}
+    - {name: Lindus Health, segment: CRO & trials}
+    - {name: Trially AI, segment: CRO & trials}
+    - {name: nPhase, segment: CRO & trials}
+    - {name: IQVIA.ai, segment: CRO & trials}
+    - {name: Weave Bio, segment: Regulatory & writing}
+    - {name: Peer AI, segment: Regulatory & writing}
+    - {name: LogicFlo, segment: Regulatory & writing}
+    - {name: Biolevate, segment: Regulatory & writing}
+    - {name: Century Health, segment: RWE & data}
+    - {name: Truveta, segment: RWE & data}
+    - {name: Aetion, segment: RWE & data}
+    - {name: Navidence, segment: RWE & data}
+    - {name: Atropos Health, segment: RWE & data}

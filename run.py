@@ -433,7 +433,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("add", help="add a LinkedIn post or article by URL")
     p.add_argument("urls", nargs="+")
-    p.add_argument("--category", choices=["policy", "market_access", "hta", "heor", "cro", "ai"])
+    p.add_argument("--category", choices=["policy", "market_access", "hta", "heor", "cro", "ai", "builders"])
     p.add_argument("--unsaved", action="store_true", help="store without marking it saved")
     p.set_defaults(func=cmd_add)
 

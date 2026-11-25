@@ -33,6 +33,9 @@ def _top_priority(item: dict[str, Any]) -> float:
         score += 0.6
     if _is_personal_announcement(item):
         score -= 6.0
+    if item.get("category") == "builders":
+        # Builders have their own section; keep the lead story for the field itself.
+        score -= 4.0
     if source_type == "linkedin" and _re.search(
         r"\b(counting down|excited to share|meet (us|me) at|join us at|see you (at|in)|"
         r"will be there|preview series|save the date|arrived at|we'?ve (arrived|landed)|"

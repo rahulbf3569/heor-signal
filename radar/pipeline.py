@@ -29,7 +29,7 @@ from .util import (
 
 log = logging.getLogger("heor_signal.pipeline")
 
-CATEGORY_ORDER = ["policy", "market_access", "hta", "heor", "cro", "ai"]
+CATEGORY_ORDER = ["policy", "market_access", "hta", "heor", "cro", "ai", "builders"]
 LINKEDIN_HOSTS = ("linkedin.com/posts/", "linkedin.com/feed/update/")
 
 # Financial wires and low-quality syndication produce truncated, context-free
@@ -486,13 +486,19 @@ def select_digest(config: Config, db: Database, date: str | None = None) -> list
     seen_stories: set[tuple[str, ...]] = set()
     linkedin = 0
 
+    # The AI builders section has its own budget so the main brief cannot
+    # crowd it out (and it cannot crowd out the main brief).
+    main_count = 0
     for item in candidates:
-        if len(selected) >= config.max_items:
-            break
         is_linkedin = item.get("source_type") == "linkedin"
         source_name = item.get("source_name") or item.get("source_id") or "unknown"
         source_id = item.get("source_id") or ""
         category = item.get("category") or "heor"
+        is_builder = category == "builders"
+        if not is_builder and main_count >= config.max_items:
+            continue
+        if is_builder and per_category.get(category, 0) >= config.max_builders:
+            continue
 
         key = _story_key(item.get("title") or "")
         if len(key) >= 6 and key in seen_stories:
@@ -501,21 +507,23 @@ def select_digest(config: Config, db: Database, date: str | None = None) -> list
         query_cap = SOURCE_QUERY_CAPS.get(source_id)
         if query_cap and per_query.get(source_id, 0) >= query_cap:
             continue
-        if is_linkedin:
+        if is_linkedin and not is_builder:
             if linkedin >= config.max_linkedin:
                 continue
         elif per_source.get(source_name, 0) >= config.max_per_source:
             continue
-        if per_category.get(category, 0) >= config.max_per_category:
+        if not is_builder and per_category.get(category, 0) >= config.max_per_category:
             continue
 
         selected.append(item)
+        if not is_builder:
+            main_count += 1
         per_category[category] = per_category.get(category, 0) + 1
         per_source[source_name] = per_source.get(source_name, 0) + 1
         per_query[source_id] = per_query.get(source_id, 0) + 1
         if len(key) >= 6:
             seen_stories.add(key)
-        if is_linkedin:
+        if is_linkedin and not is_builder:
             linkedin += 1
 
     db.assign_digest([item["id"] for item in selected], date)
