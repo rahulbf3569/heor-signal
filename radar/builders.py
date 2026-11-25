@@ -109,6 +109,18 @@ def _watch_hit(text: str) -> tuple[str, str] | None:
     return None
 
 
+def _format_amount(raw: str) -> str:
+    """"$5 Billion" -> "$5B", "USD 47 million" -> "$47M", "€6 mn" -> "€6M"."""
+    match = re.search(r"\d+(?:[.,]\d+)?", raw)
+    if not match:
+        return raw.strip()
+    number = match.group(0)
+    lowered = raw.lower()
+    unit = "B" if re.search(r"\d\s?(b|bn|billion)\b", lowered) else "M"
+    currency = "€" if ("€" in raw or "eur" in lowered) else "£" if "£" in raw else "$"
+    return f"{currency}{number}{unit}"
+
+
 def _stage(text: str) -> str:
     if ACQUISITION.search(text):
         return "Acquisition"
@@ -119,7 +131,7 @@ def _stage(text: str) -> str:
         detail = " ".join(
             part
             for part in (
-                amount_match.group(0).replace(" ", "") if amount_match else "",
+                _format_amount(amount_match.group(0)) if amount_match else "",
                 round_match.group(0).title() if round_match else "",
             )
             if part

@@ -3,7 +3,7 @@
 A daily brief on health economics, real-world evidence, market access, HTA,
 clinical research and the policy connecting them. Pulls from LinkedIn posts,
 ISPOR, NICE, EMA, HAS, FDA, CMS, MHRA, Canada's Drug Agency, PBAC, EU HTA,
-ICER and India policy, then delivers one edition to the web dashboard and
+ICER and India policy, plus a daily watch on AI builders in the field, then delivers one edition to the web dashboard and
 optionally to Telegram.
 
 ## What you get
@@ -119,6 +119,27 @@ Registers `HEOR Signal Daily` (07:30, runs `scripts\daily.ps1`) and
 workflow: both would write `data/heor_signal.db` and the next `git pull`
 would conflict. Use `-NoDashboard` to register only the daily task, and
 `.\scripts\uninstall_schedule.ps1` to remove both.
+
+## AI builders section
+
+A separate section tracks who is building AI tools for HEOR, RWE, SLR,
+regulatory/HTA, CRO and health data work: product launches, funding rounds,
+acquisitions and partnerships. Each story is tagged with its stage (for
+example `Funding · $95M Series B`) and segment (`Regulatory & writing`,
+`SLR & evidence`, `RWE & data`, `CRO & trials`, `HEOR & access`, `HTA & JCA`).
+
+- Sources: short Google News searches (RWE, SLR, regulatory writing, trials,
+  HEOR, CRO deals), a LinkedIn search for rounds and deals, two watchlist
+  searches, and the tech.eu, Pulse 2.0 and PR Newswire health feeds.
+- Rules live in `radar/builders.py`. A story qualifies when it pairs AI with
+  one of those fields and reports a launch, round, deal or partnership, or
+  when it names a watchlist company.
+- The watchlist is `builders.watchlist` in `config.yaml`, seeded with the
+  companies in `HEOR-AI-Builders-Landscape.pdf`. Add a company there and to
+  one of the `bld_watch_*` queries to follow it.
+- Up to `max_builders` (10) stories a day, on top of the main brief, so
+  neither crowds the other out. Builder stories stay eligible for 14 days and
+  are not repeated across editions.
 
 ## Run health
 
