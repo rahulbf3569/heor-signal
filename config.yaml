@@ -82,6 +82,17 @@ sources:
     max_age_days: 10
     locale: fr
 
+  # Health IT / AI trade press. Broad feed: the classifier keeps only items
+  # that touch evidence, access, trials or regulation.
+  - id: hitconsultant
+    name: HIT Consultant
+    type: rss
+    category: ai
+    url: https://hitconsultant.net/feed/
+    limit: 6
+    max_age_days: 5
+    locale: en
+
   # ---- topic searches ------------------------------------------------------
   - id: gnews_heor
     name: HEOR

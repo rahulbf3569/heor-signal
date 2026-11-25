@@ -80,11 +80,21 @@ def cmd_update(args: argparse.Namespace) -> int:
     print(f"  LinkedIn      {stats['linkedin_enriched']} enriched")
     print(f"  today's digest {stats['selected']} items")
     print(f"  duration      {stats['duration_s']}s")
-    if stats["errors"]:
-        print("  notes")
-        for error in stats["errors"][:6]:
-            print(f"    · {error}")
-    return 0 if stats["sources_ok"] else 1
+    _print_health(stats)
+    return 3 if stats.get("health") == "error" else 0
+
+
+def _print_health(stats: dict) -> None:
+    health = stats.get("health", "ok")
+    print(f"  health        {health}")
+    for error in stats.get("errors", [])[:8]:
+        print(f"    · {error}")
+    if stats.get("empty_sources"):
+        print(f"    · no items today: {', '.join(stats['empty_sources'])}")
+    if health != "ok":
+        # GitHub Actions renders this as a warning/error annotation on the run.
+        level = "error" if health == "error" else "warning"
+        print(f"::{level}::HEOR Signal run health is {health}")
 
 
 def cmd_select(args: argparse.Namespace) -> int:
@@ -104,15 +114,15 @@ def cmd_daily(args: argparse.Namespace) -> int:
     date = args.date or today_key(config)
     rule(f"{config.name} · daily edition")
 
+    health = "ok"
     if not args.skip_update:
         stats = update(config, progress=lambda msg: print(f"  {msg}"))
         print(
             f"  fetched {stats['fetched']} · stored {stats['stored']} · "
-            f"selected {stats['selected']} · {stats['duration_s']}s"
+            f"selected {stats['selected']} · pruned {stats.get('pruned', 0)} · {stats['duration_s']}s"
         )
-        if stats["errors"]:
-            for error in stats["errors"][:5]:
-                print(f"  note: {error}")
+        _print_health(stats)
+        health = stats.get("health", "ok")
 
     db = Database(config.database)
     items = select_digest(config, db, date)
@@ -126,13 +136,17 @@ def cmd_daily(args: argparse.Namespace) -> int:
     print(f"  {edition['stats']['total']} stories · {edition['stats']['sources']} sources · {edition['stats']['linkedin']} LinkedIn")
     print(f"  edition saved to {path}")
 
+    # Exit 3 marks a broken fetch (most sources down). The edition is still
+    # written from what the store holds, but the scheduler should alert.
+    failed_code = 3 if health == "error" else 0
+
     if args.no_telegram:
         print("  Telegram skipped (--no-telegram)")
-        return 0
+        return failed_code
 
     if not config.telegram_token or not config.telegram_chat_id:
         print("  Telegram not configured. Add TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to .env")
-        return 0
+        return failed_code
 
     try:
         sent = send_messages(
@@ -144,7 +158,7 @@ def cmd_daily(args: argparse.Namespace) -> int:
         print(f"  Telegram failed: {exc}")
         return 2
     print(f"  Telegram sent ({sent} message{'s' if sent != 1 else ''})")
-    return 0
+    return failed_code
 
 
 def cmd_digest(args: argparse.Namespace) -> int:

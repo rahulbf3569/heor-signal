@@ -87,19 +87,52 @@ For access from anywhere, deploy the app to a small host (a Raspberry Pi,
 Fly.io, Render, or a VPS) and point `PUBLIC_BASE_URL` at that URL. The app
 is a single FastAPI process with a SQLite file, so it moves easily.
 
-## Scheduling (Windows)
+## Scheduling
+
+**GitHub Actions is the daily scheduler** (`.github/workflows/daily.yml`). It
+runs whether or not your PC is on, commits the new edition and database to
+`main`, and the Vercel deployment picks that up.
+
+- Two slots: 05:47 IST (primary) and 09:11 IST (fallback). The fallback exits
+  straight away if today's edition already exists. GitHub delays scheduled
+  jobs at busy times, so expect the brief some time in the morning, not to
+  the minute.
+- **Run it now:** Actions tab → "Daily HEOR Signal update" → Run workflow, or
+  `gh workflow run daily.yml`.
+- **Failure alerts:** the job fails (and GitHub emails you) when nothing was
+  fetched or at least half the sources failed. Partial problems, such as
+  LinkedIn refusing guest access, show as a yellow warning on the run.
+- To add Telegram delivery, add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`
+  as repository secrets.
+
+Your local copy does not update itself. Run `git pull` before
+`python run.py serve` to read the latest edition locally.
+
+### Windows Task Scheduler (only if you stop using GitHub Actions)
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\install_schedule.ps1
 ```
 
-Registers two tasks:
+Registers `HEOR Signal Daily` (07:30, runs `scripts\daily.ps1`) and
+`HEOR Signal Dashboard` (at logon). Do not run this alongside the GitHub
+workflow: both would write `data/heor_signal.db` and the next `git pull`
+would conflict. Use `-NoDashboard` to register only the daily task, and
+`.\scripts\uninstall_schedule.ps1` to remove both.
 
-- `HEOR Signal Daily` — runs `scripts\daily.ps1` every day at 07:30.
-- `HEOR Signal Dashboard` — starts the dashboard at logon on port 8765.
+## Run health
 
-Override the time: `.\scripts\install_schedule.ps1 -DailyAt "06:15"`.
-Remove both: `.\scripts\uninstall_schedule.ps1`.
+Every update reports `health ok | degraded | error`:
+
+- `error`: nothing fetched or at least half the sources failed. `run.py
+  daily` still writes the edition from the store, but exits with code 3.
+- `degraded`: some sources failed, or LinkedIn search found posts but none
+  could be read.
+- Sources that returned no items are listed as a note.
+
+Housekeeping: candidates that never made an edition and were not saved are
+deleted after 30 days, and stories that ran in the last 7 days are not
+repeated under a new headline.
 
 ## Configuration
 
@@ -120,7 +153,7 @@ app:
 
 ## How it works
 
-1. `radar/fetch.py` reads direct feeds (NICE, ISPOR, EMA, HAS) and targeted
+1. `radar/fetch.py` reads direct feeds (NICE, ISPOR, EMA, HAS, HIT Consultant) and targeted
    Google News RSS queries for everything else, including LinkedIn posts via
    `site:linkedin.com/posts`.
 2. `radar/enrich.py` resolves Google News redirects and reads public LinkedIn

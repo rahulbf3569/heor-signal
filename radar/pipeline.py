@@ -45,6 +45,29 @@ BLOCKED_DOMAINS = {
 BLOCKED_PATHS = ("/tags/", "/tag/")
 BLOCKED_PUBLISHERS = {"TradingView", "Pluang", "Stock Titan", "MarketScreener"}
 SOURCE_QUERY_CAPS = {"gnews_india": 3}
+# Rejected candidates older than this are deleted (saved/edition items are kept).
+PRUNE_AFTER_DAYS = 30
+# A story that ran in an edition this recently is not repeated under a new headline.
+REPEAT_WINDOW_DAYS = 7
+
+
+def run_health(stats: dict[str, Any], results: list[SourceResult]) -> str:
+    """Classify a run so the scheduler can fail loudly instead of silently
+    republishing yesterday's store.
+
+    - "error": nothing was fetched, or at least half the sources failed.
+    - "degraded": some sources failed, or LinkedIn search returned posts but
+      none could be read (the usual sign LinkedIn is blocking guest access).
+    - "ok": everything else.
+    """
+    total = len(results)
+    failed = stats.get("sources_failed", 0)
+    if total and (stats.get("fetched", 0) == 0 or failed * 2 >= total):
+        return "error"
+    linkedin_found = sum(len(r.items) for r in results if r.source_id.startswith("li_"))
+    if failed or (linkedin_found and stats.get("linkedin_enriched", 0) == 0):
+        return "degraded"
+    return "ok"
 
 
 # ---------------------------------------------------------------------------
@@ -316,6 +339,9 @@ def update(
         "sources_ok": 0,
         "sources_failed": 0,
         "errors": [],
+        "pruned": 0,
+        "empty_sources": [],
+        "health": "ok",
     }
 
     try:
@@ -372,13 +398,24 @@ def update(
             db.merge_item(item)
             stats["stored"] += 1
 
-        # 4. Refresh today's digest.
+        # 4. Keep the committed database small: drop stale rejected candidates.
+        try:
+            stats["pruned"] = db.prune(iso(utcnow() - timedelta(days=PRUNE_AFTER_DAYS)))
+        except Exception as exc:  # never let housekeeping break the edition
+            log.warning("Prune failed: %s", exc)
+
+        # 5. Refresh today's digest.
         selected = select_digest(config, db, today_key(config))
         stats["selected"] = len(selected)
         stats["run_id"] = run_id
         stats["duration_s"] = round((utcnow() - started).total_seconds(), 1)
 
+        stats["empty_sources"] = sorted(r.name for r in results if r.status == "ok" and not r.items)
+        stats["health"] = run_health(stats, results)
+
         notes = {
+            "health": stats["health"],
+            "empty_sources": stats["empty_sources"],
             "linkedin_enriched": enriched,
             "sources_failed": stats["sources_failed"],
             "errors": stats["errors"][:8],
@@ -429,6 +466,18 @@ def select_digest(config: Config, db: Database, date: str | None = None) -> list
         return float(item.get("score") or 0) - min(2.4, age * 0.22)
 
     candidates.sort(key=effective, reverse=True)
+
+    # Drop stories that already ran in a recent edition under another headline
+    # or from another publisher (exact repeats are already excluded by
+    # digest_date). Only long keys are compared, to avoid false matches.
+    try:
+        since = (datetime.strptime(date, "%Y-%m-%d") - timedelta(days=REPEAT_WINDOW_DAYS)).strftime("%Y-%m-%d")
+        recent_keys = {
+            key for key in (_story_key(t) for t in db.recent_digest_titles(date, since)) if len(key) >= 6
+        }
+    except ValueError:
+        recent_keys = set()
+    candidates = [item for item in candidates if _story_key(item.get("title") or "") not in recent_keys]
 
     selected: list[dict[str, Any]] = []
     per_source: dict[str, int] = {}

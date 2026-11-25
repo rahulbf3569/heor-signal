@@ -229,6 +229,35 @@ class Database:
                 "SELECT * FROM items ORDER BY published_at DESC, score DESC"
             ).fetchall()
 
+    def recent_digest_titles(self, before: str, since: str) -> list[str]:
+        """Titles from editions in [since, before), used to avoid repeating a story."""
+        with self.connect() as conn:
+            rows = conn.execute(
+                "SELECT title FROM items WHERE digest_date >= ? AND digest_date < ?",
+                (since, before),
+            ).fetchall()
+        return [row["title"] or "" for row in rows]
+
+    def prune(self, older_than_iso: str) -> int:
+        """Drop old items that never made an edition and were never saved.
+
+        The SQLite file is committed every day by the scheduled run, so keeping
+        every rejected candidate forever bloats the repository.
+        """
+        with self.connect() as conn:
+            cursor = conn.execute(
+                """DELETE FROM items
+                   WHERE digest_date IS NULL AND COALESCE(is_saved, 0) = 0
+                     AND first_seen < ?""",
+                (older_than_iso,),
+            )
+            removed = cursor.rowcount or 0
+        if removed:
+            with self.connect() as conn:
+                conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+                conn.execute("VACUUM")
+        return removed
+
     def unassign_digest(self, date: str) -> None:
         with self.connect() as conn:
             conn.execute("UPDATE items SET digest_date = NULL WHERE digest_date = ?", (date,))

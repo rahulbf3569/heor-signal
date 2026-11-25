@@ -123,7 +123,7 @@ def fetch_google_news(source: Source, config: Config) -> SourceResult:
 
     url = "https://news.google.com/rss/search"
     params = {"q": source.query, "hl": hl, "gl": gl, "ceid": ceid}
-    response = _get(url, params=params)
+    response = _get_with_retry(url, params=params)
     feed = feedparser.parse(response.content)
     if getattr(feed, "bozo", False) and not feed.entries:
         raise RuntimeError(f"Google News parse error: {feed.bozo_exception}")
@@ -169,7 +169,7 @@ def fetch_google_news(source: Source, config: Config) -> SourceResult:
 
 
 def fetch_rss(source: Source, config: Config) -> SourceResult:
-    response = _get(source.url)
+    response = _get_with_retry(source.url)
     feed = feedparser.parse(response.content)
     if getattr(feed, "bozo", False) and not feed.entries:
         raise RuntimeError(f"RSS parse error: {feed.bozo_exception}")

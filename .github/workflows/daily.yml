@@ -1,40 +1,74 @@
 name: Daily HEOR Signal update
 
+# GitHub delays scheduled runs badly at the top of the hour (this job used to
+# land 7-10 hours after its 02:00 UTC slot). Use off-the-hour minutes and a
+# second, later slot as a fallback. The fallback exits early when today's
+# edition already exists, so the brief is built once a day.
 on:
   schedule:
-    - cron: "0 2 * * *"   # 07:30 IST
-  workflow_dispatch:
+    - cron: "17 0 * * *"   # 05:47 IST, primary
+    - cron: "41 3 * * *"   # 09:11 IST, fallback if the first was dropped
+  workflow_dispatch:   # manual runs always rebuild today's edition
 
 permissions:
   contents: write
+
+# Never let two runs write the SQLite file at the same time.
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      TZ: Asia/Kolkata
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - name: Skip if today's edition already exists
+        id: guard
+        run: |
+          today=$(date +%F)
+          if [ -f "data/digests/${today}.md" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "Edition for ${today} already built; nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v6
+        if: steps.guard.outputs.skip != 'true'
         with:
           python-version: "3.12"
+          cache: pip
 
       - name: Install dependencies
+        if: steps.guard.outputs.skip != 'true'
         run: pip install -r requirements.txt
 
       - name: Run daily update
+        id: daily
+        if: steps.guard.outputs.skip != 'true'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TZ: Asia/Kolkata
         run: |
+          set +e
           if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
             python run.py daily
           else
             python run.py daily --no-telegram
           fi
+          code=$?
+          echo "code=${code}" >> "$GITHUB_OUTPUT"
+          # Keep going so whatever was fetched is still committed; the last
+          # step fails the job (and GitHub emails you) if the run was broken.
+          exit 0
 
       - name: Commit and push changes
+        if: steps.guard.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -43,5 +77,19 @@ jobs:
             echo "No changes to commit"
             exit 0
           fi
-          git commit -m "chore: daily HEOR Signal update $(date -u +%Y-%m-%d)"
-          git push
+          git commit -m "chore: daily HEOR Signal update $(date +%F)"
+          # If someone pushed code meanwhile, rebase onto it. The bot owns the
+          # data files, so keep its copy if they conflict.
+          for attempt in 1 2 3 4; do
+            if git push; then exit 0; fi
+            git pull --rebase -X theirs origin "${GITHUB_REF_NAME}" || git rebase --abort
+            sleep $((attempt * 5))
+          done
+          echo "::error::Could not push the daily update"
+          exit 1
+
+      - name: Fail if the run was broken
+        if: steps.guard.outputs.skip != 'true' && steps.daily.outputs.code != '0'
+        run: |
+          echo "::error::run.py daily exited with ${{ steps.daily.outputs.code }} (most sources failed, nothing fetched, or Telegram failed). See the 'Run daily update' log."
+          exit 1
